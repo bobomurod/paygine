@@ -1,0 +1,4 @@
+{
+    "contractName":"myContract",
+"abi":[{"constant":false,"inputs":[{"name":"newusd","type":"uint256"}],"name":"UpdatePrice","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"GetPrice","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"ExPrice","type":"uint256"},{"indexed":false,"name":"CurrentPrice","type":"uint256"}],"name":"NewPrice","type":"event"}]
+}
