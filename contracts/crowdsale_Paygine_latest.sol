@@ -28,7 +28,7 @@ library SafeMath {
 
 interface Paygine {									//подключаем токен
 
-	function balanceOf(address who) public constant returns (uint256);
+		function balanceOf(address who) public constant returns (uint256);
   	function transfer(address to, uint256 value) public returns (bool);
   	function allowance(address owner, address spender) public constant returns (uint256);
   	function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -71,16 +71,14 @@ contract CrowdsalePaygine is Ownable {
 	event ContractPaused(uint time);
 	event ContractPauseOff(uint time);
 	event ContractEnded(uint time);
-	//event LowTokensOnContract(uint amount);
+	
 
     
   	using SafeMath for uint;
     
   	address fundAddress;   			//тот кому идут эфиры (creator of contract)
  
-  	//uint restrictedPercent;		
- 
-  	//address restricted;
+  	
  
   	Paygine token = Paygine(0x388ace50bfeba98e15af4ab1d754bda7823e34c0);					//адресс контракта нашего токена (незабудьте поменять)
  
@@ -105,7 +103,7 @@ contract CrowdsalePaygine is Ownable {
 		}
 
     function changeOracul(address newOracle) onlyOwner {						//Можно менять адресс оракула 
-      MyPrice = MyFiatContract(newOracle);
+      	MyPrice = MyFiatContract(newOracle);
     }
  
   	function CrowdsalePaygine() {
@@ -125,7 +123,7 @@ contract CrowdsalePaygine is Ownable {
   	
  
   	modifier saleIsOn() {
-    	//require(now > start && now < start + period * 1 days);
+    	
     	require(totalPurchased <= maxPurchase);
       require(pause == false);
       require(end == false);
