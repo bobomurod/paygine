@@ -9,7 +9,7 @@ pragma solidity ^0.4.18;
 contract MyFiatContract{
     address creator;    //адресс создатетля контракта 
     
-    uint usd;           //актуальная цен в долларах
+    uint usd;           //здесь будем хранить актуальную цену эфириума в центах
     event NewPrice(uint ExPrice, uint CurrentPrice);                    //ивент для будущих использований 
     function creatorChange(address newCreator) {                //можно менять создателя
         require(msg.sender == creator);
