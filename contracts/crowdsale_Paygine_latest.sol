@@ -1,4 +1,4 @@
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
@@ -82,7 +82,7 @@ contract CrowdsalePaygine is Ownable {
  
   	//address restricted;
  
-  	Paygine token = Paygine(0x388ace50bfeba98e15af4ab1d754bda7823e34c0);
+  	Paygine token = Paygine(0x388ace50bfeba98e15af4ab1d754bda7823e34c0);					//адресс контракта нашего токена (незабудьте поменять)
  
   	uint priceInCents;		
 
@@ -122,9 +122,7 @@ contract CrowdsalePaygine is Ownable {
 	    end = false;
   	}
 
-  	// function purchasesOf(address purchaser) public constant returns (uint256 value) {
-   //  	return purchases[purchaser];
-  	// }
+  	
  
   	modifier saleIsOn() {
     	//require(now > start && now < start + period * 1 days);
@@ -163,7 +161,7 @@ contract CrowdsalePaygine is Ownable {
 
 
   	/*
-		посылая 1 эфир инвестор получает 30000 центов = 30_000 / 100 = 300 токенов
+		посылая 1 эфир инвестор получает (цена 1ETH*100) центов = по умолчанию делим на 100 (цена одного токена один доллар)
   	*/
  
   	function createTokens() saleIsOn payable {
