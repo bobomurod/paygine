@@ -26,7 +26,7 @@ library SafeMath {
   }
 }
 
-interface Paygine {
+interface Paygine {									//подключаем токен
 
 	function balanceOf(address who) public constant returns (uint256);
   	function transfer(address to, uint256 value) public returns (bool);
@@ -36,13 +36,13 @@ interface Paygine {
 
 }
 
-interface MyFiatContract {
+interface MyFiatContract {					//подключаем контракт оракул 
     function GetPrice() constant returns (uint);
 }
 
 contract Ownable {
     
-  address public owner;
+  address public owner;							//овнер=управляющий контрактом
   MyFiatContract public MyPrice;
  
   
@@ -51,12 +51,12 @@ contract Ownable {
   }
  
   
-  modifier onlyOwner() {
+  modifier onlyOwner() {					//модификатор позволяющий ограничивать управление контрактом со стороны третих лиц 
     require(msg.sender == owner);
     _;
   }
  
-  function transferOwnership(address newOwner) onlyOwner {
+  function transferOwnership(address newOwner) onlyOwner {							//Функция для смены "управляющего" контрактом
     require(newOwner != address(0));      
     owner = newOwner;
   }
@@ -66,7 +66,7 @@ contract Ownable {
 contract CrowdsalePaygine is Ownable {
 	//mapping(address => uint256) purchases;  // сколько токенов купили на данный адрес 
 
-	event Debag (string message);
+	event Debag (string message);																										//пачка ивентов для дальнейших нужд
 	event TokenPurchased(address purchaser, uint256 value, uint amount);
 	event ContractPaused(uint time);
 	event ContractPauseOff(uint time);
@@ -76,7 +76,7 @@ contract CrowdsalePaygine is Ownable {
     
   	using SafeMath for uint;
     
-  	address multisig;   			//тот кому идут эфиры (creator of contract)
+  	address fundAddress;   			//тот кому идут эфиры (creator of contract)
  
   	//uint restrictedPercent;		
  
@@ -96,18 +96,22 @@ contract CrowdsalePaygine is Ownable {
   	bool public end;
     uint32 public bonusPercent = 0;
 
-    function bonusChange(uint32 newBonusPercent) onlyOwner {
+    function bonusChange(uint32 newBonusPercent) onlyOwner {			//Можно менять процент бонуса (указывается в процентах)
         bonusPercent = newBonusPercent;
     }
 
-    function changeOracul(address newOracle) onlyOwner {
+		function fundAddressChange(address newFundAddress) onlyOwner {			//Можно менять адресс фонда куда все деньги поступают
+				fundAddress = newFundAddress;
+		}
+
+    function changeOracul(address newOracle) onlyOwner {						//Можно менять адресс оракула 
       MyPrice = MyFiatContract(newOracle);
     }
  
   	function CrowdsalePaygine() {
       MyPrice = MyFiatContract(0xa7e80008e7316de144c6c61e3343600a96be674c);    //захардкоженный адрес оракул-контракта, нужно сделать функцию смены адреса чтобы не быть привязанным к одному адресу
 	  	ETHUSD = MyPrice.GetPrice();
-	    multisig = msg.sender;
+	    fundAddress = msg.sender;
 	    priceInCents = 100;  	// price in USD cents for 1 token  
 	    
 	    //purchaseCap = 89250000 * 10 ** 18;  // 89250000 tokens to one address 
@@ -130,17 +134,17 @@ contract CrowdsalePaygine is Ownable {
     	_;
   	}
 
-  	modifier isPaused() {
+  	modifier isPaused() {																//модификатор проверки "на паузе или нет" 
   		require(pause == true);
   		_;
   	}
 
-  	function setPauseOn() onlyOwner saleIsOn {
+  	function setPauseOn() onlyOwner saleIsOn {					//поставить на паузу
   		pause = true;
   		ContractPaused(now);
   	}
 	
-  	function setPauseOff() onlyOwner isPaused {
+  	function setPauseOff() onlyOwner isPaused {					//Отмена паузы
   		pause = false;
   		ContractPauseOff(now);
   	}
@@ -152,6 +156,12 @@ contract CrowdsalePaygine is Ownable {
   		ContractEnded(now);
 			token.transfer(owner, token.balanceOf(address(this)));    //Последняя поправка: вывод оставшихся токенов на баланс управляющего после завершения краудсейла
   	}
+
+		function withdrawTokens(uint quantity) onlyOwner {					//Отдельная функция для вывода N количество токенов с баланса crowdsale-контракта
+			token.transfer(fundAddress, quantity);
+		}
+
+
   	/*
 		посылая 1 эфир инвестор получает 30000 центов = 30_000 / 100 = 300 токенов
   	*/
@@ -168,8 +178,8 @@ contract CrowdsalePaygine is Ownable {
 	    TokenPurchased(msg.sender, msg.value, tokensWithBonus);  // ивент покупки токенов (покупатель, цена в эфирах, кол-во токенов)
 	    
 	    totalPurchased = totalPurchased.add(tokensWithBonus);				// суммировать все купленные токены
-	    multisig.transfer(msg.value);						// перевод создателю всего эфира 
-	    token.transfer(msg.sender, tokensWithBonus);		// контракт с себя переводит токены инвестору
+	    fundAddress.transfer(msg.value);						// перевод средств фонду 
+	    token.transfer(msg.sender, tokensWithBonus);		// контракт со своего баланса переводит токены инвестору 
   	}
  
   function() external payable {
