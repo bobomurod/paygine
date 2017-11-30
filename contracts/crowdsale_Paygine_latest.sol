@@ -110,9 +110,9 @@ contract CrowdsalePaygine is Ownable {
 	    multisig = msg.sender;
 	    priceInCents = 100;  	// price in USD cents for 1 token  
 	    
-	    //purchaseCap = 3000000 * 10 ** 18;  // 3_000_000 tokens to one address 
+	    //purchaseCap = 89250000 * 10 ** 18;  // 89250000 tokens to one address 
 	    totalPurchased = 0;
-	    maxPurchase = 3000000 * 10 ** 18; // 3_000_000 tokens sales on crowdsale 
+	    maxPurchase = 89250000 * 10 ** 18; // 89250000 tokens sales on crowdsale 
 	    Debag("crowdsale inits");
 	    pause = false;
 	    end = false;
