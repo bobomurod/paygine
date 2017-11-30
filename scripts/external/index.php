@@ -15,7 +15,7 @@ if ( abs($ethusd_new - $ethusd_cur) > 10 ) {
 			'contract' => 'myContract',
 			'method' => 'UpdatePrice',
 			'at' => '0xa7e80008e7316de144c6c61e3343600a96be674c',
-			'args' => [$ethusd_new]
+			'args' => [$ethusd_new*100]
 		));
 		// URL запроса
 		$url = 'http://localhost:3000/contract';
