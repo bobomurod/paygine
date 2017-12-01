@@ -1,5 +1,5 @@
 {
-  "name": "altestate-proxy",
+  "name": "contract-proxy",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -11,7 +11,7 @@
     "type": "git",
     "url": ""
   },
-  "author": "",
+  "author": "https://github.com/alerdenisov/",
   "license": "ISC",
   "bugs": {
     "url": ""
