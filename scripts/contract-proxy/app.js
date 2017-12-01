@@ -143,7 +143,7 @@ server.post('/*', opts, async (request, reply) => {
 }) 
 
 // Run the server!
-server.listen(3000, function (err) {
+server.listen(3000, function (err) {            // слушаем порт 3000 
   if (err) throw err
   server.log.info(`server listening on ${server.server.address().port}`)
 })
