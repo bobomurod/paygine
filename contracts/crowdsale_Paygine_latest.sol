@@ -86,17 +86,30 @@ contract CrowdsalePaygine is Ownable {
 
   	uint256 ETHUSD;		// how many USD cents in 1 ETH 
 
+		uint256 etherHardPrice;					// Установленная цена эфира на случай взлома Оракул-контракта 
+
   	uint256 public totalPurchased;  // total tokens purchased on crowdsale PUBLIC!!!
 
-  	uint256 maxPurchase; // max tokens to crowdsale
+  	uint256 thisPhaseMaxPurchase; // max tokens to crowdsale
 
   	bool public pause;
+
   	bool public end;
+
     uint32 public bonusPercent = 0;
 
+		function setMaxPurchase(uint256 maxPurchaseForThisPhase) onlyOwner {
+				thisPhaseMaxPurchase = maxPurchaseForThisPhase * 10 ** 18;
+		}		//в начале это 3000000 а потом 86250000
+
     function bonusChange(uint32 newBonusPercent) onlyOwner {			//Можно менять процент бонуса (указывается в процентах)
+				require(newBonusPercent < 40);														//Исключаем возможность ставить бонус больше 40 процент
         bonusPercent = newBonusPercent;
     }
+
+		function setEtherHardPrice(uint256 hardPrice) onlyOwner {
+				etherHardPrice = hardPrice;
+		}
 
 		function fundAddressChange(address newFundAddress) onlyOwner {			//Можно менять адресс фонда куда все деньги поступают
 				fundAddress = newFundAddress;
@@ -109,12 +122,14 @@ contract CrowdsalePaygine is Ownable {
   	function CrowdsalePaygine() {
       MyPrice = MyFiatContract(0xa7e80008e7316de144c6c61e3343600a96be674c);    //захардкоженный адрес оракул-контракта, нужно сделать функцию смены адреса чтобы не быть привязанным к одному адресу
 	  	ETHUSD = MyPrice.GetPrice();
+			etherHardPrice = 40000;																									 //Устанавливаем хард-цену эфира в 400баксов на момент инициализации контракта
 	    fundAddress = msg.sender;
 	    priceInCents = 100;  	// price in USD cents for 1 token  
 	    
 	    //purchaseCap = 89250000 * 10 ** 18;  // 89250000 tokens to one address 
 	    totalPurchased = 0;
-	    maxPurchase = 89250000 * 10 ** 18; // 89250000 tokens sales on crowdsale 
+			thisPhaseMaxPurchase = 3000000 * 10 ** 18;
+	    // maxPurchase = 89250000 * 10 ** 18; // 89250000 tokens sales on crowdsale 
 	    Debag("crowdsale inits");
 	    pause = false;
 	    end = false;
@@ -124,7 +139,7 @@ contract CrowdsalePaygine is Ownable {
  
   	modifier saleIsOn() {
     	
-    	require(totalPurchased <= maxPurchase);
+    	require(totalPurchased <= thisPhaseMaxPurchase);
       require(pause == false);
       require(end == false);
     	_;
@@ -147,13 +162,15 @@ contract CrowdsalePaygine is Ownable {
   	
   	function endCrowdsale(uint code) onlyOwner {    //остановка (завершение) краудсейла
       uint password = 1234561;											//пароль для завершения
-      require(password == code);
+			// bytes32 hashedPassword = "4b4bdbe81084e2023f39335fabe54ce0a0d3a30d1803015122e421fddf0f7b7b";		//пароль [1234561]  по sha256
+      // require(hashedPassword == keccak256(code));						//проверили пароль, если все ок, то завершаем краудсейл
+			require(password == code);
   		end = true;
   		ContractEnded(now);
-			token.transfer(owner, token.balanceOf(address(this)));    //Последняя поправка: вывод оставшихся токенов на баланс управляющего после завершения краудсейла
+			token.transfer(owner, token.balanceOf(address(this)));    	//Последняя поправка: вывод оставшихся токенов на баланс управляющего после завершения краудсейла
   	}
 
-		function withdrawTokens(uint quantity) onlyOwner {					//Отдельная функция для вывода N количество токенов с баланса crowdsale-контракта
+		function withdrawTokens(uint quantity) onlyOwner {						//Отдельная функция для вывода N количество токенов с баланса crowdsale-контракта
 			token.transfer(fundAddress, quantity);
 		}
 
@@ -163,19 +180,20 @@ contract CrowdsalePaygine is Ownable {
   	*/
  
   	function createTokens() saleIsOn payable {
-			ETHUSD = MyPrice.GetPrice();
-	    uint tokens = msg.value.mul(ETHUSD).div(priceInCents);  // вычисление токенов за присланный эфир
+			ETHUSD = MyPrice.GetPrice();																//присвоение переменной ETHUSD цены взятого со стороннего контракта
+			require(ETHUSD >= etherHardPrice);													//проверка цены эфира на искуственного понижения
+	    uint tokens = msg.value.mul(ETHUSD).div(priceInCents);  		// вычисление токенов за присланный эфир
       uint bonusTokens = tokens.mul(bonusPercent).div(100);
 	    uint tokensWithBonus = tokens.add(bonusTokens);
 	 
-	    require(token.balanceOf(this) >= tokensWithBonus);
-	    require(maxPurchase >= totalPurchased + tokensWithBonus);	
+	    require(token.balanceOf(this) >= tokensWithBonus);					//проверка токен-баланса контракта для совершение операции
+	    require(thisPhaseMaxPurchase >= totalPurchased + tokensWithBonus);		//Количество тотал-проданных+токены с бонусами которых надо сейчас отдать должны быть меньше или равно макскапу данного периода
 
-	    TokenPurchased(msg.sender, msg.value, tokensWithBonus);  // ивент покупки токенов (покупатель, цена в эфирах, кол-во токенов)
+	    TokenPurchased(msg.sender, msg.value, tokensWithBonus); 		 // ивент покупки токенов (покупатель, цена в эфирах, кол-во токенов)
 	    
 	    totalPurchased = totalPurchased.add(tokensWithBonus);				// суммировать все купленные токены
-	    fundAddress.transfer(msg.value);						// перевод средств фонду 
-	    token.transfer(msg.sender, tokensWithBonus);		// контракт со своего баланса переводит токены инвестору 
+	    fundAddress.transfer(msg.value);														// перевод средств фонду 
+	    token.transfer(msg.sender, tokensWithBonus);								// контракт со своего баланса переводит токены инвестору 
   	}
  
   function() external payable {
